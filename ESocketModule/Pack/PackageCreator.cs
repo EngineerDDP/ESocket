@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ESocketModule
+namespace ESocket.Pack
 {
-    public class Class1
-    {
-    }
+	class PackageCreator
+	{
+	}
 }
