@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ESocket.Exceptions
+namespace ESocket.Args
 {
 	/// <summary>
 	/// 连接超时异常,包含远端地址、服务名，本地端口号信息

@@ -21,7 +21,7 @@ namespace ESocket
 			get
 			{
 				if (value == null)
-					value = new DefaultSettings(204800, TimeSpan.FromSeconds(6));
+					value = new DefaultSettings(204800, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(6), 8192);
 				return value;
 			}
 		}
@@ -48,18 +48,34 @@ namespace ESocket
 		/// </summary>
 		public TimeSpan MaxmumIdleTime;
 		/// <summary>
-		/// 预留的无效包序列号，当检测到此包序列号时，不解析该数据包
+		/// 最长等待时间，超过该时间仍未收到数据包视为放弃
 		/// </summary>
-		public Byte NonSequence;
+		public TimeSpan MaxmumPackageDelay;
+		/// <summary>
+		/// 数据拆分单元的大小
+		/// </summary>
+		public Int32 PackageSize;
 		/// <summary>
 		/// 构造函数
 		/// </summary>
-		public DefaultSettings(int uploadSpeed, TimeSpan maxmumIdleTime)
+		public DefaultSettings(int uploadSpeed, TimeSpan maxmumIdleTime, TimeSpan maxmumPackageDelay, int packageSize)
 		{
 			UploadSpeed = uploadSpeed;
 			MaxmumIdleTime = maxmumIdleTime;
-			this.NonSequence = 0xff;
+			MaxmumPackageDelay = maxmumPackageDelay;
+			PackageSize = packageSize;
 		}
+		#endregion
+
+		#region Constants
+		/// <summary>
+		/// 预留的无效包序列号，当检测到此包序列号时，不解析该数据包
+		/// </summary>
+		public const Byte NonSequence = 0xff;
+		/// <summary>
+		/// 最长可用序列号，标记了可以并行发送的数据包数量
+		/// </summary>
+		public const int MaxmumSequence = 0xfe;
 		#endregion
 	}
 }

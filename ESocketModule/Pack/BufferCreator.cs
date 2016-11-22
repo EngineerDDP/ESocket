@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ESocket
+namespace ESocketModule.Pack
 {
-    public class EClient
-    {
-		
-    }
+	class BufferCreator
+	{
+
+	}
 }

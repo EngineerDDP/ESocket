@@ -35,6 +35,15 @@ namespace ESocket.Pack
 			this.size = size;
 			this.data = data;
 		}
+		/// <summary>
+		/// 创建空包
+		/// </summary>
+		public Package()
+		{
+			this.sequence = DefaultSettings.NonSequence;
+			this.size = 0;
+			this.data = null;
+		}
 
 		public byte Sequence
 		{

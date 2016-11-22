@@ -107,12 +107,17 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Args\PackageReceivedEventArgs.cs" />
+    <Compile Include="Args\BufferReceivedEventArgs.cs" />
     <Compile Include="Convert\Serialization.cs" />
     <Compile Include="DefaultSettings.cs" />
     <Compile Include="EClient.cs" />
     <Compile Include="EServer.cs" />
-    <Compile Include="Exceptions\ConnectionTimeoutException.cs" />
+    <Compile Include="Args\ConnectionTimeoutEventArgs.cs" />
     <Compile Include="IEClient.cs" />
+    <Compile Include="Pack\Buffer.cs" />
+    <Compile Include="Pack\BufferCreator.cs" />
+    <Compile Include="Pack\BufferTag.cs" />
     <Compile Include="Pack\Package.cs" />
     <Compile Include="Pack\PackageCreator.cs" />
     <Compile Include="AccessStream\IInput.cs" />
@@ -120,7 +125,10 @@
     <Compile Include="AccessStream\PipeStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Queue_Safe.cs" />
+    <Compile Include="Transmitter\ITransmitter.cs" />
     <Compile Include="Transmitter\MainTransmitter.cs" />
+    <Compile Include="Transmitter\Manager.cs" />
+    <Compile Include="Transmitter\SideTransmitter.cs" />
     <EmbeddedResource Include="Properties\ESocketModule.rd.xml" />
   </ItemGroup>
   <ItemGroup />
