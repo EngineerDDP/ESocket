@@ -132,7 +132,7 @@ namespace ESocket.Transmitter
 				{
 					Package p = RecvPackage();
 					if (p != null)
-						OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(new DateTime(DateTime.Now.Ticks), p));
+						OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(new DateTime(DateTime.Now.Ticks), p, Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));
 				}
 			});
 		}
@@ -156,7 +156,7 @@ namespace ESocket.Transmitter
 			Wait.Set();
 			//检查闲置时间，生成超时事件
 			if (IdleTime.Elapsed > DefaultSettings.Value.MaxmumIdleTime)
-				OnConnectionTimeout?.Invoke(this, new ConnectionTimeoutEventArgs(Client.Information.RemoteHostName.CanonicalName, Client.Information.RemotePort, Client.Information.LocalPort));		//传说中又臭又长的代码
+				OnConnectionTimeout?.Invoke(this, new ConnectionTimeoutEventArgs(Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));		//传说中又臭又长的代码
 			//增加计数器
 			TotalRunningTime++;
 		}

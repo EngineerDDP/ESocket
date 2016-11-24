@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Networking;
 
 namespace ESocket.Args
 {
@@ -11,30 +12,27 @@ namespace ESocket.Args
 	/// </summary>
 	class ConnectionTimeoutEventArgs : EventArgs
 	{
-		/// <summary>
-		/// 远端主机名
-		/// </summary>
-		public String RemoteHostName { get; private set; }
-		/// <summary>
-		/// 远端服务名
-		/// </summary>
-		public String RemoteServiceName { get; private set; }
-		/// <summary>
-		/// 本地主机名
-		/// </summary>
-		public String LocalServiceName { get; private set; }
-		/// <summary>
-		/// 构造函数
-		/// </summary>
-		/// <param name="remoteHostName">远端主机名</param>
-		/// <param name="remoteServiceName">远端服务名</param>
-		/// <param name="localServiceName">本地服务名</param>
-		public ConnectionTimeoutEventArgs(string remoteHostName, string remoteServiceName, string localServiceName)
+		public ConnectionTimeoutEventArgs(HostName remoteHostName, string remoteServiceName, string localServiceName)
 		{
 			RemoteHostName = remoteHostName;
 			RemoteServiceName = remoteServiceName;
 			LocalServiceName = localServiceName;
 		}
+
+		#region Regular Information
+		/// <summary>
+		/// 远端主机名
+		/// </summary>
+		public HostName RemoteHostName { get; private set; }
+		/// <summary>
+		/// 远端服务名
+		/// </summary>
+		public String RemoteServiceName { get; private set; }
+		/// <summary>
+		/// 本地服务名
+		/// </summary>
+		public String LocalServiceName { get; private set; }
+		#endregion
 
 	}
 }

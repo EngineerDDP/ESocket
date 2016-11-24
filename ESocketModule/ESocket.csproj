@@ -109,6 +109,7 @@
   <ItemGroup>
     <Compile Include="Args\PackageReceivedEventArgs.cs" />
     <Compile Include="Args\BufferReceivedEventArgs.cs" />
+    <Compile Include="Args\SocketExceptionEventArgs.cs" />
     <Compile Include="Convert\Serialization.cs" />
     <Compile Include="DefaultSettings.cs" />
     <Compile Include="EClient.cs" />
