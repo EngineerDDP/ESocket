@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ESocket.Pack;
 using System.Runtime.Serialization.Json;
 using System.IO;
+using Windows.System.Threading;
 
 namespace ESocket.Transmitter
 {
@@ -13,7 +14,7 @@ namespace ESocket.Transmitter
 	/// 管理器负责操作Transmitter，实现并行收发，优先级控制
 	/// 本类需要严格线程同步管理，保证主线程和异步发送线程无冲突
 	/// </summary>
-	class Manager
+	class Manager : IManager
 	{
 		/// <summary>
 		/// 用于操作的收发器
@@ -24,6 +25,10 @@ namespace ESocket.Transmitter
 		/// </summary>
 		private DataContractJsonSerializer Json;
 		/// <summary>
+		/// 检查计时器
+		/// </summary>
+		private ThreadPoolTimer Check;
+		/// <summary>
 		/// 存储缓存的发送队列
 		/// </summary>
 		private Dictionary<int, ESocket.Pack.Buffer> SendBuffer;
@@ -31,6 +36,10 @@ namespace ESocket.Transmitter
 		/// 存储缓存的接收队列
 		/// </summary>
 		private Dictionary<int, ESocket.Pack.Buffer> RecvBuffer;
+		/// <summary>
+		/// 当触发异常时生成
+		/// </summary>
+		public event EventHandler<Args.SocketExceptionEventArgs> OnExcepetionOccurred;
 		/// <summary>
 		/// 递交超时事件
 		/// </summary>
@@ -122,12 +131,16 @@ namespace ESocket.Transmitter
 			{
 				//创建任务组
 				Task[] t = new Task[2];
+				//设置检查点
+				Check = ThreadPoolTimer.CreatePeriodicTimer(CheckForBadBuffer, DefaultSettings.Value.MaxmumPackageDelay);
 				//设置异步接收
 				t[0] = Transmitter.StartAutoRecvAsync();
 				//设置异步发送
 				t[1] = Task.Run(new Action(SendingThread));
 				//开始
 				await Task.WhenAll(t);
+				//结束
+				Check.Cancel();
 			}
 		}
 		/// <summary>
@@ -143,7 +156,7 @@ namespace ESocket.Transmitter
 					{
 						Pack.Buffer b = SendBuffer[i];
 						Pack.Package p;
-						for (int j = 0; j < b.Priority; ++j)
+						for (int j = 0; b != null && j < b.Priority; ++j) 
 						{
 							//判断
 							if (b.Tag != null)
@@ -154,7 +167,14 @@ namespace ESocket.Transmitter
 								break;
 							//发送
 							p = new Package((byte)i, (ushort)s.Length, s.ToArray());
-							Transmitter?.SendPackage(p);
+							try
+							{
+								Transmitter?.SendPackage(p);
+							}
+							catch(Exception e)
+							{
+								OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(e));
+							}
 							//重设
 							s.SetLength(0);
 						}
@@ -183,10 +203,32 @@ namespace ESocket.Transmitter
 				var buffer = RecvBuffer[e.Value.Sequence];
 				buffer.Data.Write(e.Value.Data, 0, e.Value.Size);
 				if (buffer.Data.Length == buffer.DataLength)
-					OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(buffer.CheckPoint,buffer,e.RemoteHostName,e.RemoteServiceName,e.LocalServiceName));
+				{
+					OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(buffer.CheckPoint, buffer, e.RemoteHostName, e.RemoteServiceName, e.LocalServiceName));
+					RecvBuffer[e.Value.Sequence] = null;
+					buffer.Dispose();
+				}
 			}
 		}
-
+		/// <summary>
+		/// 检查Buffer是否已过期
+		/// </summary>
+		/// <param name="Timer"></param>
+		private void CheckForBadBuffer(ThreadPoolTimer Timer)
+		{
+			DateTime oldestTime = DateTime.Now - DefaultSettings.Value.MaxmumPackageDelay;
+			lock(RecvBuffer)
+			{
+				foreach(int i in RecvBuffer.Keys)
+				{
+					if (RecvBuffer[i] != null && RecvBuffer[i].CheckPoint < oldestTime)
+					{
+						RecvBuffer[i].Dispose();
+						RecvBuffer[i] = null;
+					}
+				}
+			}
+		}
 		/// <summary>
 		/// 移除收发器，返回成功与否的标志
 		/// </summary>

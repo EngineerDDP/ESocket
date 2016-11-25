@@ -4,10 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ESocketModule.Args
+namespace ESocket.Args
 {
 	class SocketExceptionEventArgs
 	{
+		public SocketExceptionEventArgs(Exception error)
+		{
+			Error = error;
+		}
+
 		public Exception Error { get; private set; }
 	}
 }

@@ -126,10 +126,14 @@
     <Compile Include="AccessStream\PipeStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Queue_Safe.cs" />
+    <Compile Include="Structs\Info_AddRoute.cs" />
+    <Compile Include="Structs\Info_Established.cs" />
+    <Compile Include="Transmitter\IManager.cs" />
     <Compile Include="Transmitter\ITransmitter.cs" />
     <Compile Include="Transmitter\MainTransmitter.cs" />
     <Compile Include="Transmitter\Manager.cs" />
     <Compile Include="Transmitter\SideTransmitter.cs" />
+    <Compile Include="Transmitter\SingleClient.cs" />
     <EmbeddedResource Include="Properties\ESocketModule.rd.xml" />
   </ItemGroup>
   <ItemGroup />
