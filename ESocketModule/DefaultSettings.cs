@@ -76,6 +76,10 @@ namespace ESocket
 		/// 最长可用序列号，标记了可以并行发送的数据包数量
 		/// </summary>
 		public const int MaxmumSequence = 0xfe;
+		/// <summary>
+		/// 用于区分新链接和子链接的标记ID
+		/// </summary>
+		public const Int64 NewConnectionID = 0x00;
 		#endregion
 	}
 }

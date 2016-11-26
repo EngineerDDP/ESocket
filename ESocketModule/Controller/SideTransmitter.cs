@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using ESocket.Args;
 using ESocket.Pack;
 
-namespace ESocket.Transmitter
+namespace ESocket.Controller
 {
 	/// <summary>
 	/// 辅助数据收发单元

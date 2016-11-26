@@ -4,7 +4,7 @@ using ESocket.Args;
 using ESocket.Pack;
 using Windows.Networking;
 
-namespace ESocket.Transmitter
+namespace ESocket.Controller
 {
 	interface ITransmitter
 	{

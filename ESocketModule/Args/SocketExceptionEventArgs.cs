@@ -8,11 +8,13 @@ namespace ESocket.Args
 {
 	class SocketExceptionEventArgs
 	{
-		public SocketExceptionEventArgs(Exception error)
+		public SocketExceptionEventArgs(Type senderType, Exception error)
 		{
+			SenderType = senderType;
 			Error = error;
 		}
 
+		public Type SenderType { get; private set; }
 		public Exception Error { get; private set; }
 	}
 }

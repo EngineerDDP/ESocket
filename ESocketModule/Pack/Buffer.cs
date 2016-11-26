@@ -76,14 +76,24 @@ namespace ESocket.Pack
 			Priority = 0;
 		}
 		/// <summary>
+		/// 使用特定Tag创建缓冲区，用于数据发送
+		/// </summary>
+		public Buffer(BufferTag tag, int priority)
+		{
+			Data = new MemoryStream();
+			Tag = tag;
+			Priority = priority;
+		}
+		/// <summary>
 		/// 使用特定的Tag和指定优先级创建缓冲区
 		/// </summary>
 		/// <param name="s"></param>
 		/// <param name="tag"></param>
 		/// <param name="priority"></param>
-		public Buffer(Stream s, BufferTag tag, int priority)
+		public Buffer(BufferTag tag, Stream s, int priority)
 		{
 			Data = s;
+			Data.Position = 0;
 			Tag = tag;
 			Priority = priority;
 		}

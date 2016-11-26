@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using ESocket.Args;
 using ESocket.Pack;
 
-namespace ESocket.Transmitter
+namespace ESocket.Controller
 {
 	interface IManager
 	{

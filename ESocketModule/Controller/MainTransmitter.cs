@@ -12,7 +12,7 @@ using System.IO;
 using System.Threading;
 using Windows.Networking;
 
-namespace ESocket.Transmitter
+namespace ESocket.Controller
 {
 	/// <summary>
 	/// 主收发器，使用TCP协议，本类不使用线程锁，应当保证仅有一个线程在运行
@@ -132,7 +132,9 @@ namespace ESocket.Transmitter
 				{
 					Package p = RecvPackage();
 					if (p != null)
+					{
 						OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(new DateTime(DateTime.Now.Ticks), p, Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));
+					}
 				}
 			});
 		}
