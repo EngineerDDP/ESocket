@@ -10,7 +10,7 @@ namespace ESocket.Args
 	/// <summary>
 	/// 连接超时异常,包含远端地址、服务名，本地端口号信息
 	/// </summary>
-	class ConnectionTimeoutEventArgs : EventArgs
+	public class ConnectionTimeoutEventArgs : EventArgs
 	{
 		public ConnectionTimeoutEventArgs(HostName remoteHostName, string remoteServiceName, string localServiceName)
 		{

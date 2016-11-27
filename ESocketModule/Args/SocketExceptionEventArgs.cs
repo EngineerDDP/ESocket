@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ESocket.Args
 {
-	class SocketExceptionEventArgs
+	public class SocketExceptionEventArgs
 	{
 		public SocketExceptionEventArgs(Type senderType, Exception error)
 		{

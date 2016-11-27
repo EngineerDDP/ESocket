@@ -17,12 +17,12 @@ namespace ESocket.Controller
 	/// <summary>
 	/// 主收发器，使用TCP协议，本类不使用线程锁，应当保证仅有一个线程在运行
 	/// </summary>
-	class MainTransmitter : ITransmitter
+	class MainTransmitter : ITransmitter 
 	{
 		/// <summary>
 		/// 最大上行速度
 		/// </summary>
-		private Int32 UploadSpeed;
+		private Int32 UploadSpeedLimit;
 		/// <summary>
 		/// 闲置时间
 		/// </summary>
@@ -35,6 +35,14 @@ namespace ESocket.Controller
 		/// 用于限制上行速度的信号量
 		/// </summary>
 		private AutoResetEvent Wait;
+		/// <summary>
+		/// 当前上行速度
+		/// </summary>
+		public UInt32 UploadSpeed { get; private set; }
+		/// <summary>
+		/// 当前下行速度
+		/// </summary>
+		public UInt32 DownloadSpeed { get; private set; }
 		/// <summary>
 		/// 总下载,单位为KB
 		/// </summary>
@@ -51,6 +59,10 @@ namespace ESocket.Controller
 		/// 用于上行计数,限制上行速度
 		/// </summary>
 		private UInt32 UploadCount;
+		/// <summary>
+		/// 用于下行计数
+		/// </summary>
+		private UInt32 DownloadCount;
 		/// <summary>
 		/// 是否生成接收事件
 		/// </summary>
@@ -105,9 +117,9 @@ namespace ESocket.Controller
 		/// 使用默认的上行速度创建新数据收发器
 		/// </summary>
 		/// <param name="client"></param>
-		private MainTransmitter(StreamSocket client)
+		public MainTransmitter(StreamSocket client)
 		{
-			UploadSpeed = DefaultSettings.Value.UploadSpeed;
+			UploadSpeedLimit = DefaultSettings.Value.UploadSpeed;
 			IdleTime = new Stopwatch();
 			Clock = ThreadPoolTimer.CreatePeriodicTimer(ScheduleCheck, TimeSpan.FromSeconds(1));
 			Wait = new AutoResetEvent(false);
@@ -153,9 +165,13 @@ namespace ESocket.Controller
 			//检查发送计数器，发送闲置包
 			if (UploadCount == 0)
 				SendPackage(new Package());
+			//刷新速度
+			UploadSpeed = UploadCount;
+			DownloadSpeed = DownloadCount;
 			//清零计数器,唤醒线程
 			UploadCount = 0;
 			Wait.Set();
+			DownloadCount = 0;
 			//检查闲置时间，生成超时事件
 			if (IdleTime.Elapsed > DefaultSettings.Value.MaxmumIdleTime)
 				OnConnectionTimeout?.Invoke(this, new ConnectionTimeoutEventArgs(Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));		//传说中又臭又长的代码
@@ -169,7 +185,7 @@ namespace ESocket.Controller
 		public void SendPackage(Package pack)
 		{
 			//检查上行量
-			if(UploadCount >= UploadSpeed)
+			if(UploadCount >= UploadSpeedLimit)
 				Wait.WaitOne();
 
 			Stream s = Client.OutputStream.AsStreamForWrite();
@@ -202,6 +218,7 @@ namespace ESocket.Controller
 			byte b = (byte)s.ReadByte();
 
 			TotalDownload += 1;
+			DownloadCount += 1;
 			//检查序列号并读取剩余数据
 			if (b != DefaultSettings.NonSequence)
 			{
@@ -213,9 +230,16 @@ namespace ESocket.Controller
 
 				//设置计数器
 				TotalDownload += size + 2u;
+				DownloadCount += size + 2u;
 				r = new Package(b, size, buffer);
 			}
 			return r;
+		}
+
+		public void Dispose()
+		{
+			Client.Dispose();
+			Wait.Dispose();
 		}
 	}
 }

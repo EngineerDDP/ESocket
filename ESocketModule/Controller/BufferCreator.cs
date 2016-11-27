@@ -59,12 +59,12 @@ namespace ESocket.Controller
 		/// <param name="type">数据类型标记</param>
 		/// <param name="msg">附加字符串</param>
 		/// <returns></returns>
-		public static Pack.Buffer CreateBuffer(String type)
+		public static Pack.Buffer CreateBuffer(String type, bool IsUser = true)
 		{
 			Pack.BufferTag tag = new Pack.BufferTag()
 			{
 				Name = type,
-				IsUserMsg = true,
+				IsUserMsg = IsUser,
 				Dispatch = DateTime.Now,
 				UserString = "None",
 				DataLength = 0

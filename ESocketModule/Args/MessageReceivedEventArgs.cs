@@ -11,7 +11,7 @@ namespace ESocket.Args
 	/// <summary>
 	/// 应用层数据包参数列表
 	/// </summary>
-	class MessageReceivedEventArgs
+	public class MessageReceivedEventArgs
 	{
 		public MessageReceivedEventArgs(HostName remoteHostName, HostName localHostName, string remoteServiceName, string type, string str, Stream data, object obj, DateTime recvTime)
 		{

@@ -80,6 +80,10 @@ namespace ESocket
 		/// 用于区分新链接和子链接的标记ID
 		/// </summary>
 		public const Int64 NewConnectionID = 0x00;
+		/// <summary>
+		/// 临时ID
+		/// </summary>
+		public const Int64 WaitForIdentified = -1;
 		#endregion
 	}
 }

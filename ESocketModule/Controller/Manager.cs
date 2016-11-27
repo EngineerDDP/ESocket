@@ -8,6 +8,7 @@ using System.Runtime.Serialization.Json;
 using System.IO;
 using Windows.System.Threading;
 using System.Threading;
+using Newtonsoft.Json;
 
 namespace ESocket.Controller
 {
@@ -50,6 +51,10 @@ namespace ESocket.Controller
 		/// </summary>
 		public event EventHandler<Args.SocketExceptionEventArgs> OnExcepetionOccurred;
 		/// <summary>
+		/// 开始接收新数据
+		/// </summary>
+		public event EventHandler<Args.MessageStartReceivingEventArgs> OnStartReceiving;
+		/// <summary>
 		/// 递交超时事件
 		/// </summary>
 		public event EventHandler<Args.ConnectionTimeoutEventArgs> OnConnectionTimeout
@@ -72,6 +77,7 @@ namespace ESocket.Controller
 		/// </summary>
 		public Manager()
 		{
+			Wait = new AutoResetEvent(false);
 			Transmitter = null;
 			Encoder = new Convert.PackageEncoder();
 			Json = new DataContractJsonSerializer(typeof(BufferTag));
@@ -117,6 +123,15 @@ namespace ESocket.Controller
 			return false;
 		}
 		/// <summary>
+		/// 获取数据当前长度
+		/// </summary>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public long GetLength(int id)
+		{
+			return RecvBuffer[id].Data.Length;
+		}
+		/// <summary>
 		/// 设置收发器，返回成功与否的标志
 		/// </summary>
 		/// <param name="transmitter"></param>
@@ -159,12 +174,13 @@ namespace ESocket.Controller
 		/// </summary>
 		private void SendingThread()
 		{
-			using (MemoryStream s = new MemoryStream())
+			using (MemoryStream s = new MemoryStream(DefaultSettings.Value.PackageSize))
 			{
 				while (Transmitter != null)	//发送序列全空等待
 				{
 					int count = 0;
-					foreach (int i in SendBuffer.Keys)
+					int i;
+					for (i = 0; i < SendBuffer.Keys.Count; ++i) 
 					{
 						if (SendBuffer[i] == null)
 						{
@@ -176,8 +192,11 @@ namespace ESocket.Controller
 						for (int j = 0;j < b.Priority; ++j) 
 						{
 							//判断
-							if (b.Tag != null)
+							if (!b.TagSended)
+							{
 								Json.WriteObject(s, b.Tag);
+								b.TagSended = !b.TagSended;
+							}
 							else if (b.Data.Position != b.DataLength)
 								b.Data.CopyTo(s, (int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize));
 							else
@@ -210,19 +229,23 @@ namespace ESocket.Controller
 		/// 响应接收信息的事件 
 		/// </summary>
 		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void Transmitter_OnPackageReceived(object sender, Args.PackageReceivedEventArgs e)
+		/// <param name="args"></param>
+		private void Transmitter_OnPackageReceived(object sender, Args.PackageReceivedEventArgs args)
 		{
 			//解密
-			Pack.Package p = Encoder.Decode(e.Value);
+			Pack.Package p = Encoder.Decode(args.Value);
 			if(RecvBuffer[p.Sequence] == null)
 			{
 				try
 				{
 					BufferTag tag = Json.ReadObject(new MemoryStream(p.Data)) as BufferTag;
 					RecvBuffer[p.Sequence] = new Pack.Buffer(tag);
+					OnStartReceiving?.Invoke(this, new Args.MessageStartReceivingEventArgs(tag.Name, tag.UserString, tag.DataLength, p.Sequence));
 				}
-				catch { }
+				catch(Exception e)
+				{
+					OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e));
+				}
 			}
 			else
 			{
@@ -231,9 +254,9 @@ namespace ESocket.Controller
 			}
 			if (RecvBuffer[p.Sequence].Data.Length == RecvBuffer[p.Sequence].DataLength)
 			{
-				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(RecvBuffer[p.Sequence].CheckPoint, RecvBuffer[p.Sequence], e.RemoteHostName, e.RemoteServiceName, e.LocalServiceName));
+				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(RecvBuffer[p.Sequence].CheckPoint, RecvBuffer[p.Sequence], args.RemoteHostName, args.RemoteServiceName, args.LocalServiceName));
+				RecvBuffer[p.Sequence]?.Dispose();
 				RecvBuffer[p.Sequence] = null;
-				RecvBuffer[p.Sequence].Dispose();
 			}
 		}
 		/// <summary>
@@ -245,7 +268,7 @@ namespace ESocket.Controller
 			DateTime oldestTime = DateTime.Now - DefaultSettings.Value.MaxmumPackageDelay;
 			lock(RecvBuffer)
 			{
-				foreach(int i in RecvBuffer.Keys)
+				for (int i = 0; i < RecvBuffer.Keys.Count; ++i) 
 				{
 					if (RecvBuffer[i] != null && RecvBuffer[i].CheckPoint < oldestTime)
 					{

@@ -3,15 +3,25 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace ESocket.Controller
 {
+#if DEBUG
+	public class DEBUG
+	{
+		public static ISingleClient GetDebugClient()
+		{
+			return new SingleClient(new DebugTransmitter(), true, 0);
+		}
+	}
+#endif
 	/// <summary>
 	/// 子链接，为访问Transmitter提供统一的接口
 	/// </summary>
-	class SingleClient
+	class SingleClient : ISingleClient
 	{
 		/// <summary>
 		/// 标识该链接是否为服务器端
@@ -38,21 +48,38 @@ namespace ESocket.Controller
 		/// </summary>
 		public Int64 OwnerID { get; private set; }
 		/// <summary>
+		/// 延迟
+		/// </summary>
+		public TimeSpan Ping { get; private set; }
+		/// <summary>
 		/// 上行速度
 		/// </summary>
-		public Int32 UploadSpeed { get; private set; }
+		public UInt32 UploadSpeed
+		{
+			get
+			{
+				return Transmitter.UploadSpeed;
+			}
+		}
 		/// <summary>
 		/// 下行速度
 		/// </summary>
-		public Int32 DownloadSpeed { get; private set; }
+		public UInt32 DownloadSpeed
+		{
+			get
+			{
+				return Transmitter.DownloadSpeed;
+			}
+		}
+
 		/// <summary>
 		/// 最大上行速度
 		/// </summary>
-		public Int32 UploadSpeedLimit { get; private set; }
+		public UInt32 UploadSpeedLimit { get; private set; }
 		/// <summary>
 		/// 最大下行速度
 		/// </summary>
-		public Int32 DownloadSpeedLimit { get; private set; }
+		public UInt32 DownloadSpeedLimit { get; private set; }
 		/// <summary>
 		/// 总下行数据量
 		/// </summary>
@@ -87,6 +114,17 @@ namespace ESocket.Controller
 		/// 传递消息
 		/// </summary>
 		public event EventHandler<Args.MessageReceivedEventArgs> OnMessageReceived;
+		public event EventHandler<Args.MessageStartReceivingEventArgs> OnStartReceiving
+		{
+			add
+			{
+				ConnectionManager.OnStartReceiving += value;
+			}
+			remove
+			{
+				ConnectionManager.OnStartReceiving -= value;
+			}
+		}
 		/// <summary>
 		/// 递交超时事件
 		/// </summary>
@@ -105,20 +143,22 @@ namespace ESocket.Controller
 		/// 初始化
 		/// </summary>
 		/// <param name="transmitter"></param>
-		public SingleClient(ITransmitter transmitter, bool isServer, long owner = DefaultSettings.NewConnectionID)
+		public SingleClient(ITransmitter transmitter, bool isServer, long owner = -1)
 		{
 			IsServerPort = isServer;
 			OwnerID = owner;
+			Ping = new TimeSpan();
 			ConnectionManager = new Manager();
 			Transmitter = transmitter;
 			ID = GetID();
+			Errors = new List<Args.SocketExceptionEventArgs>();
 		}
 		/// <summary>
 		/// 设置速度限制
 		/// </summary>
 		/// <param name="upload">上行速度限制</param>
 		/// <param name="download">下行速度限制</param>
-		public void SetSpeedLimit(Int32 upload,Int32 download)
+		public void SetSpeedLimit(UInt32 upload,UInt32 download)
 		{
 			UploadSpeedLimit = upload;
 			DownloadSpeedLimit = download;
@@ -145,6 +185,28 @@ namespace ESocket.Controller
 			
 			await ConnectionManager.Init();
 		}
+
+		public bool Send(String type, String msg, int priority, Stream s, int port = 0)
+		{
+			return ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, msg, priority, s));
+		}
+		public bool Send(String type, String msg)
+		{
+			return ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, msg));
+		}
+		public bool Send(String type, object o)
+		{
+			return ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, o));
+		}
+		/// <summary>
+		/// 获取指定ID的接受情况
+		/// </summary>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public long MessageRecvStatus(int id)
+		{
+			return ConnectionManager.GetLength(id);
+		}
 		/// <summary>
 		/// 错误收集
 		/// </summary>
@@ -161,12 +223,17 @@ namespace ESocket.Controller
 		/// <param name="e"></param>
 		private void ConnectionManager_OnBufferReceived(object sender, Args.BufferReceivedEventArgs e)
 		{
+			//记录延迟
+			Ping = e.RecvTime - e.Value.Tag.Dispatch;
 			object o = null;
 			try
 			{
-				o = JsonConvert.DeserializeObject(e.Value.Tag.UserString);
+				o = JsonConvert.DeserializeObject<System_Info>(e.Value.Tag.UserString);
 			}
-			catch { }
+			catch(Exception error)
+			{
+				Errors.Add(new Args.SocketExceptionEventArgs(this.GetType(), error));
+			}
 			if (!e.Value.Tag.IsUserMsg)
 			{
 				(o as System_Info).Execute(this);
@@ -189,22 +256,27 @@ namespace ESocket.Controller
 		/// </summary>
 		public void SetInfo()
 		{
-			System_Info info = new ConnectionEstablish()
+			System_Info info = new System_Info()
 			{
 				OwnerID = OwnerID,
 				DownLoadSpeed = DownloadSpeedLimit,
 				UploadSpeed = UploadSpeedLimit
 			};
 			Pack.Buffer b = BufferCreator.CreateBuffer("Init", info, false);
-			b.Tag.IsUserMsg = false;
 			ConnectionManager.AddBuffer(b);
+		}
+
+		public void Close()
+		{
+			ConnectionManager.RemoveTransmitter();
+			Transmitter.Dispose();
 		}
 
 		#region Communicate
 		/// <summary>
 		/// 连接建立所需的信息
 		/// </summary>
-		abstract class System_Info
+		class System_Info
 		{
 			/// <summary>
 			/// 该值表示其属于哪一个父连接
@@ -213,31 +285,16 @@ namespace ESocket.Controller
 			/// <summary>
 			/// 远端上行速度
 			/// </summary>
-			public Int32 UploadSpeed { get; set; }
+			public UInt32 UploadSpeed { get; set; }
 			/// <summary>
 			/// 远端下行速度
 			/// </summary>
-			public Int32 DownLoadSpeed { get; set; }
-			public abstract void Execute(SingleClient c);
-		}
-		class ConnectionEstablish : System_Info
-		{
-			public override void Execute(SingleClient c)
+			public UInt32 DownLoadSpeed { get; set; }
+			public void Execute(SingleClient c)
 			{
 				c.OwnerID = OwnerID;
 				c.UploadSpeedLimit = UploadSpeed;
 				c.DownloadSpeedLimit = DownLoadSpeed;
-			}
-		}
-		class ResetUploadSpeed : System_Info
-		{
-			public override void Execute(SingleClient c)
-			{
-				if(c.IsServerPort)
-				{
-					c.UploadSpeedLimit = UploadSpeed;
-					c.DownloadSpeedLimit = DownLoadSpeed;
-				}
 			}
 		}
 		#endregion

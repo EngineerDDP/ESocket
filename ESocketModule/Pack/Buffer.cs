@@ -36,6 +36,7 @@ namespace ESocket.Pack
 		/// 数据标记
 		/// </summary>
 		public BufferTag Tag { get; set; }
+		public Boolean TagSended { get; set; }
 		/// <summary>
 		/// 发送优先级
 		/// </summary>
@@ -73,6 +74,7 @@ namespace ESocket.Pack
 		{
 			Data = new MemoryStream();
 			Tag = tag;
+			TagSended = false;
 			Priority = 0;
 		}
 		/// <summary>
@@ -82,6 +84,7 @@ namespace ESocket.Pack
 		{
 			Data = new MemoryStream();
 			Tag = tag;
+			TagSended = false;
 			Priority = priority;
 		}
 		/// <summary>

@@ -27,7 +27,18 @@ namespace ESocket.Pack
 		/// 数据发送时间
 		/// </summary>
 		[DataMember(Order = 2)]
-		public DateTime Dispatch { get; set; }
+		public long DispatchTicks { get; set; }
+		public DateTime Dispatch
+		{
+			get
+			{
+				return new DateTime(DispatchTicks);
+			}
+			set
+			{
+				DispatchTicks = value.Ticks;
+			}
+		}
 		/// <summary>
 		/// 用户字符串，用于提供简单标记
 		/// </summary>

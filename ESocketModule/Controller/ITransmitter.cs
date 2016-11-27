@@ -6,8 +6,9 @@ using Windows.Networking;
 
 namespace ESocket.Controller
 {
-	interface ITransmitter
+	interface ITransmitter : IDisposable
 	{
+		uint DownloadSpeed { get; }
 		HostName LocalHostName { get; }
 		string LocalServiceName { get; }
 		HostName RemoteHostName { get; }
@@ -15,6 +16,7 @@ namespace ESocket.Controller
 		ulong TotalDownload { get; }
 		uint TotalRunningTime { get; }
 		ulong TotalUpload { get; }
+		uint UploadSpeed { get; }
 
 		event EventHandler<ConnectionTimeoutEventArgs> OnConnectionTimeout;
 		event EventHandler<PackageReceivedEventArgs> OnPackageReceived;

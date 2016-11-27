@@ -107,12 +107,16 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Args\ConnectionReceivedEventArgs.cs" />
     <Compile Include="Args\MessageReceivedEventArgs.cs" />
+    <Compile Include="Args\MessageStartReceivingEventArgs.cs" />
     <Compile Include="Args\PackageReceivedEventArgs.cs" />
     <Compile Include="Args\BufferReceivedEventArgs.cs" />
     <Compile Include="Args\SocketExceptionEventArgs.cs" />
     <Compile Include="Controller\BufferCreator.cs" />
+    <Compile Include="Controller\DebugTransmitter.cs" />
     <Compile Include="Controller\IManager.cs" />
+    <Compile Include="Controller\ISingleClient.cs" />
     <Compile Include="Controller\ITransmitter.cs" />
     <Compile Include="Controller\MainTransmitter.cs" />
     <Compile Include="Controller\Manager.cs" />
