@@ -30,8 +30,8 @@ namespace ESocket
 		{
 			Controller.ITransmitter trans = new Controller.MainTransmitter(args.Socket);
 			Controller.SingleClient c = new Controller.SingleClient(trans, true);
-			await c.Init();
 			OnConnectionReceived?.Invoke(this, new Args.ConnectionReceivedEventArgs(c));
+			await c.Init();
 		}
 
 		public void Dispose()

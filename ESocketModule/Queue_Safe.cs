@@ -10,7 +10,7 @@ namespace ESocket
 	/// 仅支持出队与入队操作的线程安全的队列类
 	/// </summary>
 	/// <typeparam name="Type">使用指定类型参数实例化泛型</typeparam>
-	public class Queue_Safe<Type>
+	internal class Queue_Safe<Type>
 	{
 		/// <summary>
 		/// 队列内容

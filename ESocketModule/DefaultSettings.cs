@@ -21,7 +21,7 @@ namespace ESocket
 			get
 			{
 				if (value == null)
-					value = new DefaultSettings(204800, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(6), 8192);
+					value = new DefaultSettings(204800, TimeSpan.FromSeconds(6), TimeSpan.FromDays(1), 8192);
 				return value;
 			}
 		}

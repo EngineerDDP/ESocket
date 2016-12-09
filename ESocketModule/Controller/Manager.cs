@@ -42,11 +42,11 @@ namespace ESocket.Controller
 		/// <summary>
 		/// 存储缓存的发送队列
 		/// </summary>
-		private Dictionary<int, ESocket.Pack.Buffer> SendBuffer;
+		private Pack.Buffer[] SendBuffer;
 		/// <summary>
 		/// 存储缓存的接收队列
 		/// </summary>
-		private Dictionary<int, ESocket.Pack.Buffer> RecvBuffer;
+		private Pack.Buffer[] RecvBuffer;
 		/// <summary>
 		/// 当触发异常时生成
 		/// </summary>
@@ -83,12 +83,12 @@ namespace ESocket.Controller
 			Encoder = new Convert.PackageEncoder();
 			Json = new DataContractJsonSerializer();
 			//初始化
-			SendBuffer = new Dictionary<int, Pack.Buffer>();
-			RecvBuffer = new Dictionary<int, Pack.Buffer>();
-			for(int i = 0;i < DefaultSettings.MaxmumSequence;++i)
+			SendBuffer = new Pack.Buffer[DefaultSettings.MaxmumSequence];
+			RecvBuffer = new Pack.Buffer[DefaultSettings.MaxmumSequence];
+			for (int i = 0; i < DefaultSettings.MaxmumSequence; ++i) 
 			{
-				SendBuffer.Add(i, null);
-				RecvBuffer.Add(i, null);
+				SendBuffer[i] = null;
+				RecvBuffer[i] = null;
 			}
 		}
 		/// <summary>
@@ -115,7 +115,7 @@ namespace ESocket.Controller
 		/// <returns></returns>
 		private Boolean FindAvailableID(ref int id)
 		{
-			foreach (int i in SendBuffer.Keys)
+			for (int i = 0; i < SendBuffer.Length; ++i)
 				if (SendBuffer[i] == null)
 				{
 					id = i;
@@ -181,7 +181,7 @@ namespace ESocket.Controller
 				{
 					int count = 0;
 					int i;
-					for (i = 0; i < SendBuffer.Keys.Count; ++i) 
+					for (i = 0; i < SendBuffer.Length; ++i) 
 					{
 						if (SendBuffer[i] == null)
 						{
@@ -198,12 +198,8 @@ namespace ESocket.Controller
 								Json.WriteObject(s, b.Tag);
 								b.TagSended = !b.TagSended;
 							}
-							else if (b.Data.Position != b.DataLength)
-							{
-								var bytes = new Byte[(int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize)];
-								b.Data.Read(bytes, 0, bytes.Length);
-								s.Write(bytes, 0, bytes.Length);
-							}
+							else if (b.Data.CanRead && b.Data.Position != b.DataLength)
+								b.Data.CopyTo(s, (int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize));
 							else
 							{
 								SendBuffer[i].Dispose();
@@ -219,13 +215,13 @@ namespace ESocket.Controller
 							}
 							catch(Exception e)
 							{
-								OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e));
+								OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
 							}
 							//重设
 							s.SetLength(0);
 						}
 					}
-					if (count == SendBuffer.Keys.Count)
+					if (count == SendBuffer.Length)
 						Wait.WaitOne();
 				}
 			}
@@ -244,13 +240,13 @@ namespace ESocket.Controller
 			{
 				try
 				{
-					BufferTag tag = Json.ReadObject(new MemoryStream(p.Data)) as BufferTag;
+					BufferTag tag = Json.ReadObject(new MemoryStream(p.Data));
 					RecvBuffer[p.Sequence] = new Pack.Buffer(tag);
 					OnStartReceiving?.Invoke(this, new Args.MessageStartReceivingEventArgs(tag.Name, tag.UserString, tag.DataLength, p.Sequence));
 				}
 				catch(Exception e)
 				{
-					OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e));
+					OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
 				}
 			}
 			else
@@ -273,7 +269,7 @@ namespace ESocket.Controller
 			DateTime oldestTime = DateTime.Now - DefaultSettings.Value.MaxmumPackageDelay;
 			lock(RecvBuffer)
 			{
-				for (int i = 0; i < RecvBuffer.Keys.Count; ++i) 
+				for (int i = 0; i < RecvBuffer.Length; ++i) 
 				{
 					if (RecvBuffer[i] != null && RecvBuffer[i].CheckPoint < oldestTime)
 					{

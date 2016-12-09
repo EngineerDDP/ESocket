@@ -143,6 +143,7 @@ namespace ESocket.Controller
 		/// 传递消息
 		/// </summary>
 		public event EventHandler<Args.MessageReceivedEventArgs> OnMessageReceived;
+		public event EventHandler<Args.SocketExceptionEventArgs> OnExceptionOccurred;
 		public event EventHandler<Args.MessageStartReceivingEventArgs> OnStartReceiving
 		{
 			add
@@ -246,7 +247,10 @@ namespace ESocket.Controller
 		/// <param name="e"></param>
 		private void ConnectionManager_OnExcepetionOccurred(object sender, Args.SocketExceptionEventArgs e)
 		{
-			Errors.Add(e);
+			if (e.CanIgnore)
+				Errors.Add(e);
+			else
+				OnExceptionOccurred?.Invoke(this, e);
 		}
 		/// <summary>
 		/// 响应Buffer，整理并提交
@@ -266,7 +270,7 @@ namespace ESocket.Controller
 				}
 				catch (Exception error)
 				{
-					Errors.Add(new Args.SocketExceptionEventArgs(this.GetType(), error));
+					Errors.Add(new Args.SocketExceptionEventArgs(this.GetType(), error, true));
 				}
 				(o as System_Info).Execute(this);
 			}

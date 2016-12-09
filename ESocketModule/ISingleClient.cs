@@ -25,6 +25,7 @@ namespace ESocket
 		uint UploadSpeed { get; }
 		uint UploadSpeedLimit { get; }
 
+		event EventHandler<SocketExceptionEventArgs> OnExceptionOccurred;
 		event EventHandler<ConnectionTimeoutEventArgs> OnConnectionTimeout;
 		event EventHandler<MessageReceivedEventArgs> OnMessageReceived;
 		event EventHandler<MessageStartReceivingEventArgs> OnStartReceiving;
