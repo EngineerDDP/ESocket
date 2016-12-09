@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using ESocket.Args;
+using Windows.Networking;
 
-namespace ESocket.Controller
+namespace ESocket
 {
 	public interface ISingleClient
 	{
@@ -12,8 +13,12 @@ namespace ESocket.Controller
 		uint DownloadSpeedLimit { get; }
 		List<SocketExceptionEventArgs> Errors { get; }
 		long ID { get; }
+		String LocalHostName { get; }
+		string LocalServiceName { get; }
 		long OwnerID { get; }
 		TimeSpan Ping { get; }
+		String RemoteHostName { get; }
+		string RemoteServiceName { get; }
 		TimeSpan RunningTime { get; }
 		ulong TotalDownload { get; }
 		ulong TotalUpload { get; }

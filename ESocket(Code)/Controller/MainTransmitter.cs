@@ -79,7 +79,6 @@ namespace ESocket.Controller
 		/// 收到数据包事件
 		/// </summary>
 		public event EventHandler<PackageReceivedEventArgs> OnPackageReceived;
-		public event EventHandler<SocketExceptionEventArgs> OnSocketException;
 
 
 		#region SocketInformation
@@ -143,18 +142,10 @@ namespace ESocket.Controller
 			{
 				while (TrigEvent)
 				{
-					try
+					Package p = RecvPackage();
+					if (p != null)
 					{
-						Package p = RecvPackage();
-						if (p != null)
-						{
-							OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(new DateTime(DateTime.Now.Ticks), p, Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));
-						}
-					}
-					catch (Exception e)
-					{
-						OnSocketException?.Invoke(this, new SocketExceptionEventArgs(this.GetType(), e));
-						StopAutoRecv();
+						OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(new DateTime(DateTime.Now.Ticks), p, Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));
 					}
 				}
 			});
@@ -171,17 +162,9 @@ namespace ESocket.Controller
 		/// </summary>
 		private void ScheduleCheck(ThreadPoolTimer Timer)
 		{
-			try
-			{
-				//检查发送计数器，发送闲置包
-				if (UploadCount == 0)
-					SendPackage(new Package());
-			}
-			catch (Exception e)
-			{
-				OnSocketException?.Invoke(this, new SocketExceptionEventArgs(this.GetType(), e));
-				Timer.Cancel();
-			}
+			//检查发送计数器，发送闲置包
+			if (UploadCount == 0)
+				SendPackage(new Package());
 			//刷新速度
 			UploadSpeed = UploadCount;
 			DownloadSpeed = DownloadCount;

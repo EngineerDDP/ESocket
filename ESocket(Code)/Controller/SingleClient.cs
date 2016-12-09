@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Windows.Networking;
 
 namespace ESocket.Controller
 {
@@ -111,34 +110,6 @@ namespace ESocket.Controller
 				return TimeSpan.FromSeconds(Transmitter.TotalRunningTime);
 			}
 		}
-		public String RemoteHostName
-		{
-			get
-			{
-				return Transmitter.RemoteHostName.CanonicalName;
-			}
-		}
-		public String LocalHostName
-		{
-			get
-			{
-				return Transmitter.LocalHostName.CanonicalName;
-			}
-		}
-		public String RemoteServiceName
-		{
-			get
-			{
-				return Transmitter.RemoteServiceName;
-			}
-		}
-		public String LocalServiceName
-		{
-			get
-			{
-				return Transmitter.LocalServiceName;
-			}
-		}
 		/// <summary>
 		/// 传递消息
 		/// </summary>
@@ -181,14 +152,13 @@ namespace ESocket.Controller
 			Transmitter = transmitter;
 			ID = GetID();
 			Errors = new List<Args.SocketExceptionEventArgs>();
-			Transmitter.OnSocketException += new EventHandler<Args.SocketExceptionEventArgs>(ConnectionManager_OnExcepetionOccurred);
 		}
 		/// <summary>
 		/// 设置速度限制
 		/// </summary>
 		/// <param name="upload">上行速度限制</param>
 		/// <param name="download">下行速度限制</param>
-		public void SetSpeedLimit(UInt32 upload, UInt32 download)
+		public void SetSpeedLimit(UInt32 upload,UInt32 download)
 		{
 			UploadSpeedLimit = upload;
 			DownloadSpeedLimit = download;
@@ -209,13 +179,11 @@ namespace ESocket.Controller
 		/// </summary>
 		public async Task Init()
 		{
-			if (ConnectionManager.SetTransmitter(Transmitter))
-			{
-				ConnectionManager.OnBufferReceived += ConnectionManager_OnBufferReceived;
-				ConnectionManager.OnExcepetionOccurred += ConnectionManager_OnExcepetionOccurred;
-
-				await ConnectionManager.Init();
-			}
+			ConnectionManager.SetTransmitter(Transmitter);
+			ConnectionManager.OnBufferReceived += ConnectionManager_OnBufferReceived;
+			ConnectionManager.OnExcepetionOccurred += ConnectionManager_OnExcepetionOccurred;
+			
+			await ConnectionManager.Init();
 		}
 
 		public bool Send(String type, String msg, int priority, Stream s, int port = 0)
@@ -258,16 +226,16 @@ namespace ESocket.Controller
 			//记录延迟
 			Ping = e.RecvTime - e.Value.Tag.Dispatch;
 			object o = null;
+			try
+			{
+				o = JsonConvert.DeserializeObject<System_Info>(e.Value.Tag.UserString);
+			}
+			catch(Exception error)
+			{
+				Errors.Add(new Args.SocketExceptionEventArgs(this.GetType(), error));
+			}
 			if (!e.Value.Tag.IsUserMsg)
 			{
-				try
-				{
-					o = JsonConvert.DeserializeObject<System_Info>(e.Value.Tag.UserString);
-				}
-				catch (Exception error)
-				{
-					Errors.Add(new Args.SocketExceptionEventArgs(this.GetType(), error));
-				}
 				(o as System_Info).Execute(this);
 			}
 			else

@@ -17,7 +17,7 @@ namespace ESocket.Controller
 	/// <summary>
 	/// 主收发器，使用TCP协议，本类不使用线程锁，应当保证仅有一个线程在运行
 	/// </summary>
-	class MainTransmitter : ITransmitter 
+	class MainTransmitter : ITransmitter
 	{
 		/// <summary>
 		/// 最大上行速度
@@ -143,18 +143,20 @@ namespace ESocket.Controller
 			{
 				while (TrigEvent)
 				{
+					Package p = null;
 					try
 					{
-						Package p = RecvPackage();
-						if (p != null)
-						{
-							OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(new DateTime(DateTime.Now.Ticks), p, Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));
-						}
+						p = RecvPackage();
 					}
 					catch (Exception e)
 					{
-						OnSocketException?.Invoke(this, new SocketExceptionEventArgs(this.GetType(), e));
+						OnSocketException?.Invoke(this, new SocketExceptionEventArgs(this.GetType(), e, false));
 						StopAutoRecv();
+					}
+
+					if (p != null)
+					{
+						OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(new DateTime(DateTime.Now.Ticks), p, Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));
 					}
 				}
 			});
@@ -179,7 +181,7 @@ namespace ESocket.Controller
 			}
 			catch (Exception e)
 			{
-				OnSocketException?.Invoke(this, new SocketExceptionEventArgs(this.GetType(), e));
+				OnSocketException?.Invoke(this, new SocketExceptionEventArgs(this.GetType(), e, true));
 				Timer.Cancel();
 			}
 			//刷新速度
@@ -191,8 +193,8 @@ namespace ESocket.Controller
 			DownloadCount = 0;
 			//检查闲置时间，生成超时事件
 			if (IdleTime.Elapsed > DefaultSettings.Value.MaxmumIdleTime)
-				OnConnectionTimeout?.Invoke(this, new ConnectionTimeoutEventArgs(Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));		//传说中又臭又长的代码
-			//增加计数器
+				OnConnectionTimeout?.Invoke(this, new ConnectionTimeoutEventArgs(Client.Information.RemoteHostName, Client.Information.RemotePort, Client.Information.LocalPort));      //传说中又臭又长的代码
+																																														//增加计数器
 			TotalRunningTime++;
 		}
 		/// <summary>
@@ -202,7 +204,7 @@ namespace ESocket.Controller
 		public void SendPackage(Package pack)
 		{
 			//检查上行量
-			if(UploadCount >= UploadSpeedLimit)
+			if (UploadCount >= UploadSpeedLimit)
 				Wait.WaitOne();
 
 			Stream s = Client.OutputStream.AsStreamForWrite();

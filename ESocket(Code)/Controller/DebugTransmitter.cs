@@ -89,7 +89,6 @@ namespace ESocket.Controller
 
 		public event EventHandler<ConnectionTimeoutEventArgs> OnConnectionTimeout;
 		public event EventHandler<PackageReceivedEventArgs> OnPackageReceived;
-		public event EventHandler<SocketExceptionEventArgs> OnSocketException;
 
 		public void Dispose()
 		{

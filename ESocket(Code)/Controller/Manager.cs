@@ -199,14 +199,9 @@ namespace ESocket.Controller
 								b.TagSended = !b.TagSended;
 							}
 							else if (b.Data.Position != b.DataLength)
-							{
-								var bytes = new Byte[(int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize)];
-								b.Data.Read(bytes, 0, bytes.Length);
-								s.Write(bytes, 0, bytes.Length);
-							}
+								b.Data.CopyTo(s, (int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize));
 							else
 							{
-								SendBuffer[i].Dispose();
 								SendBuffer[i] = null;
 								break;
 							}
@@ -258,9 +253,10 @@ namespace ESocket.Controller
 				var buffer = RecvBuffer[p.Sequence];
 				buffer.Data.Write(p.Data, 0, p.Size);
 			}
-			if (RecvBuffer[p.Sequence]?.Data.Length == RecvBuffer[p.Sequence]?.DataLength)
+			if (RecvBuffer[p.Sequence].Data.Length == RecvBuffer[p.Sequence].DataLength)
 			{
 				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(RecvBuffer[p.Sequence].CheckPoint, RecvBuffer[p.Sequence], args.RemoteHostName, args.RemoteServiceName, args.LocalServiceName));
+				RecvBuffer[p.Sequence]?.Dispose();
 				RecvBuffer[p.Sequence] = null;
 			}
 		}

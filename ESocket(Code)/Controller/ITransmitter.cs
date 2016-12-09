@@ -20,7 +20,6 @@ namespace ESocket.Controller
 
 		event EventHandler<ConnectionTimeoutEventArgs> OnConnectionTimeout;
 		event EventHandler<PackageReceivedEventArgs> OnPackageReceived;
-		event EventHandler<SocketExceptionEventArgs> OnSocketException;
 
 		Package RecvPackage();
 		void SendPackage(Package pack);
