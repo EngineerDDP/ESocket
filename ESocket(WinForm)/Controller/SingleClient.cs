@@ -276,6 +276,7 @@ namespace ESocket.Controller
 			}
 			else
 			{
+				e.Value.Data.Position = 0;
 				Args.MessageReceivedEventArgs args = new Args.MessageReceivedEventArgs(
 					e.RemoteHostName,
 					Transmitter.LocalHostName,
@@ -283,7 +284,9 @@ namespace ESocket.Controller
 					e.Value.Tag.Name,
 					e.Value.Tag.UserString,
 					e.Value.Data,
-					o, e.RecvTime);
+					o,
+					e.RecvTime,
+					e.Value.Tag.Dispatch);
 				OnMessageReceived?.Invoke(this, args);
 			}
 		}

@@ -26,7 +26,7 @@ namespace ESocket.Controller
 		/// <summary>
 		/// 对象序列化方法
 		/// </summary>
-		private DataContractJsonSerializer Json;
+		private DataContractSerializer Json;
 		/// <summary>
 		/// 数据加密算法
 		/// </summary>
@@ -81,7 +81,7 @@ namespace ESocket.Controller
 			Wait = new AutoResetEvent(false);
 			Transmitter = null;
 			Encoder = new Convert.PackageEncoder();
-			Json = new DataContractJsonSerializer();
+			Json = new DataContractSerializer();
 			//初始化
 			SendBuffer = new Pack.Buffer[DefaultSettings.MaxmumSequence];
 			RecvBuffer = new Pack.Buffer[DefaultSettings.MaxmumSequence];
@@ -175,58 +175,60 @@ namespace ESocket.Controller
 		/// </summary>
 		private void SendingThread()
 		{
-			using (MemoryStream s = new MemoryStream(DefaultSettings.Value.PackageSize))
+			byte[] buffer;
+			int count;
+			int i;
+			while (Transmitter != null) //发送序列全空等待
 			{
-				while (Transmitter != null)	//发送序列全空等待
+				count = 0;
+				for (i = 0; i < SendBuffer.Length; ++i)
 				{
-					int count = 0;
-					int i;
-					for (i = 0; i < SendBuffer.Length; ++i) 
+					if (SendBuffer[i] == null)
 					{
-						if (SendBuffer[i] == null)
-						{
-							++count;
-							continue;
-						}
-						Pack.Buffer b = SendBuffer[i];
-						Pack.Package p;
-						for (int j = 0;j < b.Priority; ++j) 
-						{
-							//判断
-							if (!b.TagSended)
-							{
-								Json.WriteObject(s, b.Tag);
-								b.TagSended = !b.TagSended;
-							}
-							else if (b.Data.CanRead && b.Data.Position != b.DataLength)
-								b.Data.CopyTo(s, (int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize));
-							else
-							{
-								SendBuffer[i].Dispose();
-								SendBuffer[i] = null;
-								break;
-							}
-							//加密
-							p = Encoder.Encode(new Package((byte)i, (ushort)s.Length, s.ToArray()));
-							//发送
-							try
-							{
-								Transmitter?.SendPackage(p);
-							}
-							catch(Exception e)
-							{
-								OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
-							}
-							//重设
-							s.SetLength(0);
-						}
+						++count;
+						continue;
 					}
-					if (count == SendBuffer.Length)
-						Wait.WaitOne();
+					Pack.Buffer b = SendBuffer[i];
+					Pack.Package p;
+					for (int j = 0; j < b.Priority; ++j)
+					{
+						//判断
+						if (!b.TagSended)
+						{
+							buffer = Json.WriteObject(b.Tag);
+							b.TagSended = !b.TagSended;
+						}
+						else if (b.Data.CanRead && b.Data.Position != b.DataLength)
+						{
+							buffer = new byte[(int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize)];
+							b.Data.Read(buffer, 0, buffer.Length);
+						}
+						else
+						{
+							SendBuffer[i].Dispose();
+							SendBuffer[i] = null;
+							break;
+						}
+						//加密
+						p = Encoder.Encode(new Package((byte)i, (ushort)buffer.Length, buffer));
+						//发送
+						try
+						{
+							Transmitter?.SendPackage(p);
+						}
+						catch (Exception e)
+						{
+							OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
+						}
+						buffer = null;
+					}
 				}
+				if (count == SendBuffer.Length)
+					Wait.WaitOne();
 			}
+
 		}
-		
+
 		/// <summary>
 		/// 响应接收信息的事件 
 		/// </summary>
@@ -240,7 +242,7 @@ namespace ESocket.Controller
 			{
 				try
 				{
-					BufferTag tag = Json.ReadObject(new MemoryStream(p.Data));
+					BufferTag tag = Json.ReadObject(p.Data);
 					RecvBuffer[p.Sequence] = new Pack.Buffer(tag);
 					OnStartReceiving?.Invoke(this, new Args.MessageStartReceivingEventArgs(tag.Name, tag.UserString, tag.DataLength, p.Sequence));
 				}
@@ -254,7 +256,7 @@ namespace ESocket.Controller
 				var buffer = RecvBuffer[p.Sequence];
 				buffer.Data.Write(p.Data, 0, p.Size);
 			}
-			if (RecvBuffer[p.Sequence]?.Data.Length == RecvBuffer[p.Sequence]?.DataLength)
+			if (RecvBuffer[p.Sequence] != null && RecvBuffer[p.Sequence].Data.Length == RecvBuffer[p.Sequence].DataLength)
 			{
 				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(RecvBuffer[p.Sequence].CheckPoint, RecvBuffer[p.Sequence], args.RemoteHostName, args.RemoteServiceName, args.LocalServiceName));
 				RecvBuffer[p.Sequence] = null;

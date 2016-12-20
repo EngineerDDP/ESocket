@@ -13,7 +13,7 @@ namespace ESocket.Args
 	/// </summary>
 	public class MessageReceivedEventArgs
 	{
-		public MessageReceivedEventArgs(HostName remoteHostName, HostName localHostName, string remoteServiceName, string type, string str, Stream data, object obj, DateTime recvTime)
+		public MessageReceivedEventArgs(HostName remoteHostName, HostName localHostName, string remoteServiceName, string type, string str, Stream data, object obj, DateTime recvTime, DateTime sendTime)
 		{
 			RemoteHostName = remoteHostName;
 			LocalHostName = localHostName;
@@ -23,6 +23,7 @@ namespace ESocket.Args
 			Data = data;
 			Obj = obj;
 			this.RecvTime = recvTime;
+			this.SendTime = sendTime;
 		}
 
 		/// <summary>
@@ -57,5 +58,9 @@ namespace ESocket.Args
 		/// 接收时间点
 		/// </summary>
 		public DateTime RecvTime { get; private set; }
+		/// <summary>
+		/// 发送时间点
+		/// </summary>
+		public DateTime SendTime { get; private set; }
 	}
 }

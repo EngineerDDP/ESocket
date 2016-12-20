@@ -189,7 +189,7 @@ namespace ESocket.Controller
 			DownloadSpeed = DownloadCount;
 			//清零计数器,唤醒线程
 			UploadCount = 0;
-			Wait.Set();
+			Wait?.Set();
 			DownloadCount = 0;
 			//检查闲置时间，生成超时事件
 			if (IdleTime.Elapsed > DefaultSettings.Value.MaxmumIdleTime)
@@ -257,8 +257,10 @@ namespace ESocket.Controller
 
 		public void Dispose()
 		{
+			Clock.Cancel();
 			Client.Dispose();
 			Wait.Dispose();
+			Wait = null;
 		}
 	}
 }
