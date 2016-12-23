@@ -7,26 +7,6 @@ namespace ESocket.Controller
 {
 	internal class DataContractSerializer
 	{
-		//public byte[] WriteObject(BufferTag tag)
-		//{
-		//	using (MemoryStream s = new MemoryStream())
-		//	{
-		//		StreamWriter sw = new StreamWriter(s);
-		//		sw.Write(JsonConvert.SerializeObject(tag));
-		//		sw.Flush();
-		//		return s.ToArray();
-		//	}
-		//}
-
-		//public BufferTag ReadObject(byte[] b)
-		//{
-		//	using (MemoryStream s = new MemoryStream(b))
-		//	{
-		//		StreamReader sr = new StreamReader(s);
-		//		return JsonConvert.DeserializeObject<BufferTag>(sr.ReadToEnd());
-		//	}
-		//}
-		//No JSON
 		public byte[] WriteObject(BufferTag tag)
 		{
 			using (MemoryStream s = new MemoryStream())
