@@ -10,6 +10,7 @@ using Windows.System.Threading;
 using System.Threading;
 using Newtonsoft.Json;
 using System.Net.Sockets;
+using ESocket.Convert;
 
 namespace ESocket.Controller
 {
@@ -25,13 +26,9 @@ namespace ESocket.Controller
 		/// </summary>
 		private ITransmitter Transmitter;
 		/// <summary>
-		/// 对象序列化方法
+		/// 缓冲区切片方法
 		/// </summary>
-		private DataContractSerializer Json;
-		/// <summary>
-		/// 数据加密算法
-		/// </summary>
-		private Convert.IPackageEncoder Encoder;
+		BufferSerializer Serializer;
 		/// <summary>
 		/// 检查计时器
 		/// </summary>
@@ -85,8 +82,7 @@ namespace ESocket.Controller
 		{
 			Wait = new AutoResetEvent(false);
 			Transmitter = null;
-			Encoder = new Convert.PackageEncoder();
-			Json = new DataContractSerializer();
+			Serializer = new BufferSerializer();
 			//初始化
 			SendBuffer = new List<KeyValuePair<ulong, Pack.Buffer>>();
 			RecvBuffer = new List<KeyValuePair<ulong, Pack.Buffer>>();
@@ -168,55 +164,26 @@ namespace ESocket.Controller
 		/// </summary>
 		private void SendingThread()
 		{
-			byte[] buffer;
-			int count;
 			int i;
 			while (Transmitter != null) //发送序列全空等待
 			{
-				count = 0;
-				for (i = 0; i < SendBuffer.Length; ++i)
+				for (i = 0; i < SendBuffer.Count; ++i)
 				{
-					if (SendBuffer[i] == null)
+					Pack.Package[] packs;
+					bool complete = Serializer.ReadPackage(SendBuffer[i].Key, SendBuffer[i].Value, out packs);
+					try
 					{
-						++count;
-						continue;
+						foreach (Pack.Package p in packs)
+							Transmitter.SendPackage(p);
 					}
-					Pack.Buffer b = SendBuffer[i];
-					Pack.Package p;
-					for (int j = 0; j < b.Priority; ++j)
+					catch (Exception e)
 					{
-						//判断
-						if (!b.TagSended)
-						{
-							buffer = Json.WriteObject(b.Tag);
-							b.TagSended = !b.TagSended;
-						}
-						else if (b.Data.CanRead && b.Data.Position != b.DataLength)
-						{
-							buffer = new byte[(int)Math.Min(b.DataLength - b.Data.Position, DefaultSettings.Value.PackageSize)];
-							b.Data.Read(buffer, 0, buffer.Length);
-						}
-						else
-						{
-							SendBuffer[i].Dispose();
-							SendBuffer[i] = null;
-							break;
-						}
-						//加密
-						p = Encoder.Encode(new Package((byte)i, (ushort)buffer.Length, buffer));
-						//发送
-						try
-						{
-							Transmitter?.SendPackage(p);
-						}
-						catch (Exception e)
-						{
-							OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
-						}
-						buffer = null;
+						OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
 					}
+					if (complete)
+						SendBuffer.RemoveAt(i);
 				}
-				if (count == SendBuffer.Length)
+				if (SendBuffer.Count == 0)
 					Wait.WaitOne();
 			}
 
@@ -229,30 +196,25 @@ namespace ESocket.Controller
 		/// <param name="args"></param>
 		private void Transmitter_OnPackageReceived(object sender, Args.PackageReceivedEventArgs args)
 		{
-			//解密
-			Pack.Package p = Encoder.Decode(args.Value);
-			if(RecvBuffer[p.Sequence] == null)
+			bool complete = false;
+			var val = RecvBuffer.FirstOrDefault(q => q.Key == args.Value.Sequence).Value;
+			try
 			{
-				try
-				{
-					BufferTag tag = Json.ReadObject(p.Data);
-					RecvBuffer[p.Sequence] = new Pack.Buffer(tag);
-					OnStartReceiving?.Invoke(this, new Args.MessageStartReceivingEventArgs(tag.Name, tag.UserString, tag.DataLength, p.Sequence));
-				}
-				catch(Exception e)
-				{
-					OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
-				}
+				complete = Serializer.WritePackage(args.Value, ref val);
 			}
-			else
+			catch (Exception e)
 			{
-				var buffer = RecvBuffer[p.Sequence];
-				buffer.Data.Write(p.Data, 0, p.Data.Length);
+				OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
 			}
-			if (RecvBuffer[p.Sequence] != null && RecvBuffer[p.Sequence].Data.Length == RecvBuffer[p.Sequence].DataLength)
+			if (val == null)
 			{
-				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(RecvBuffer[p.Sequence].CheckPoint, RecvBuffer[p.Sequence], args.RemoteHostName, args.RemoteServiceName, args.LocalServiceName));
-				RecvBuffer[p.Sequence] = null;
+				RecvBuffer.Add(new KeyValuePair<ulong, Pack.Buffer>(args.Value.Sequence, val));
+				OnStartReceiving?.Invoke(this, new Args.MessageStartReceivingEventArgs(val.Tag.Name, val.Tag.UserString, val.Tag.DataLength, args.Value.Sequence));
+			}
+			if(complete)
+			{
+				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(val.CheckPoint, val, args.RemoteHostName, args.RemoteServiceName, args.LocalServiceName));
+				RecvBuffer.RemoveAt(RecvBuffer.FindIndex(q => q.Key == args.Value.Sequence));
 			}
 		}
 		/// <summary>
@@ -264,12 +226,12 @@ namespace ESocket.Controller
 			DateTime oldestTime = DateTime.Now - DefaultSettings.Value.MaxmumPackageDelay;
 			lock(RecvBuffer)
 			{
-				for (int i = 0; i < RecvBuffer.Length; ++i) 
+				for (int i = 0; i < RecvBuffer.Count; ++i) 
 				{
-					if (RecvBuffer[i] != null && RecvBuffer[i].CheckPoint < oldestTime)
+					if (RecvBuffer[i].Value.CheckPoint < oldestTime)
 					{
-						RecvBuffer[i].Dispose();
-						RecvBuffer[i] = null;
+						RecvBuffer[i].Value.Dispose();
+						RecvBuffer.RemoveAt(i);
 					}
 				}
 			}

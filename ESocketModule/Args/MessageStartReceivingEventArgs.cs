@@ -8,7 +8,7 @@ namespace ESocket.Args
 {
 	public class MessageStartReceivingEventArgs
 	{
-		public MessageStartReceivingEventArgs(string type, string msg, long length, int iD)
+		public MessageStartReceivingEventArgs(string type, string msg, long length, ulong iD)
 		{
 			Type = type;
 			Msg = msg;
@@ -19,6 +19,6 @@ namespace ESocket.Args
 		public String Type { get; private set; }
 		public String Msg { get; private set; }
 		public Int64 Length { get; private set; }
-		public int ID { get; private set; }
+		public ulong ID { get; private set; }
 	}
 }

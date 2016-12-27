@@ -28,11 +28,11 @@ namespace ESocket.Pack
 		/// Package的实际长度
 		/// </summary>
 		private uint packageLength;
-		public int Sequence
+		public ulong Sequence
 		{
 			get
 			{
-				return (int)Convert.Serialization.GetUInt64(sequence, 0, sequence.Length);
+				return Convert.Serialization.GetUInt64(sequence, 0, sequence.Length);
 			}
 		}
 		public byte[] Data
@@ -48,7 +48,7 @@ namespace ESocket.Pack
 		/// <param name="sequence">包序列号，用于包拼接</param>
 		/// <param name="size">包内数据块大小</param>
 		/// <param name="data">数据</param>
-		public Package(uint sequence, uint size, byte[] data)
+		public Package(ulong sequence, uint size, byte[] data)
 		{
 			this.sequence = Convert.Serialization.GetBytes(sequence, DefaultSettings.LengthofSeqTag);
 			this.size = Convert.Serialization.GetBytes(size, DefaultSettings.LengthofSizeTag);

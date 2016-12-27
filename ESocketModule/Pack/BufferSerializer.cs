@@ -9,20 +9,38 @@ namespace ESocket.Pack
 {
 	class BufferSerializer
 	{
+		/// <summary>
+		/// 序列化方案
+		/// </summary>
 		IDataContractSerializer Serializer;
+		/// <summary>
+		/// 编码器
+		/// </summary>
+		IPackageEncoder Encoder;
 		public BufferSerializer()
 		{
-			Serializer = 
+			Serializer = new DataContractSerializer();
+			Encoder = new PackageEncoder();
 		}
-		public Package[] ReadPackage(Buffer b)
+		/// <summary>
+		/// 读数据包
+		/// </summary>
+		/// <param name="tag">序列号</param>
+		/// <param name="b">数据缓冲区</param>
+		/// <param name="result">返回读取的结果</param>
+		/// <returns></returns>
+		public Boolean ReadPackage(ulong tag, Buffer b, out Pack.Package[] result)
 		{
-			Pack.Package[] p;
+			Boolean IsEnd = false;
+			Pack.Package p;
+			List<Pack.Package> temp = new List<Package>();
+			byte[] buffer;
 			for (int j = 0; j < b.Priority; ++j)
 			{
 				//判断
 				if (!b.TagSended)
 				{
-					buffer = Json.WriteObject(b.Tag);
+					buffer = Serializer.WriteObject(b.Tag);
 					b.TagSended = !b.TagSended;
 				}
 				else if (b.Data.CanRead && b.Data.Position != b.DataLength)
@@ -32,23 +50,33 @@ namespace ESocket.Pack
 				}
 				else
 				{
-					SendBuffer[i].Dispose();
-					SendBuffer[i] = null;
+					IsEnd = true;
 					break;
 				}
 				//加密
-				p = Encoder.Encode(new Package((byte)i, (ushort)buffer.Length, buffer));
-				//发送
-				try
-				{
-					Transmitter?.SendPackage(p);
-				}
-				catch (Exception e)
-				{
-					OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
-				}
-				buffer = null;
+				p = Encoder.Encode(new Package(tag, (uint)buffer.Length, buffer));
+				temp.Add(p);
 			}
+			result = temp.ToArray();
+			return IsEnd;
+		}
+		/// <summary>
+		/// 写数据包
+		/// </summary>
+		/// <param name="p">数据包</param>
+		/// <param name="b">缓冲区</param>
+		/// <returns>返回创建的缓冲区</returns>
+		public Boolean WritePackage(Package p,ref Buffer b)
+		{
+			Pack.Package pack = Encoder.Decode(p);
+			if (b == null)
+			{
+				BufferTag tag = Serializer.ReadObject(p.Data);
+				b = new Pack.Buffer(tag);
+			}
+			else
+				b.Data.Write(p.Data, 0, p.Data.Length);
+			return b.Data.Length >= b.DataLength;
 		}
 	}
 }

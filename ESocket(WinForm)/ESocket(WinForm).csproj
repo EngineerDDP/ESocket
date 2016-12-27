@@ -80,7 +80,6 @@
     <Compile Include="IEClient.cs" />
     <Compile Include="ISingleClient.cs" />
     <Compile Include="Pack\Buffer.cs" />
-    <Compile Include="Pack\BufferCreator.cs" />
     <Compile Include="Pack\BufferTag.cs" />
     <Compile Include="Pack\Package.cs" />
     <Compile Include="Pack\PackageCreator.cs" />
