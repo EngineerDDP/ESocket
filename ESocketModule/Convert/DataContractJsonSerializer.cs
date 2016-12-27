@@ -3,9 +3,9 @@ using System.IO;
 using ESocket.Pack;
 using Newtonsoft.Json;
 
-namespace ESocket.Controller
+namespace ESocket.Convert
 {
-	internal class DataContractSerializer
+	internal class DataContractSerializer : IDataContractSerializer
 	{
 		public byte[] WriteObject(BufferTag tag)
 		{

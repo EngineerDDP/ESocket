@@ -119,7 +119,7 @@
     <Compile Include="Args\SocketExceptionEventArgs.cs" />
     <Compile Include="Controller\BufferCreator.cs" />
     <Compile Include="Controller\Connect.cs" />
-    <Compile Include="Convert\DataContractJsonSerializer.cs" />
+    <Compile Include="Controller\DataContractJsonSerializer.cs" />
     <Compile Include="Controller\DebugTransmitter.cs" />
     <Compile Include="Controller\IManager.cs" />
     <Compile Include="Controller\ITransmitter.cs" />
@@ -128,7 +128,6 @@
     <Compile Include="Controller\SideTransmitter.cs" />
     <Compile Include="Controller\SingleClient.cs" />
     <Compile Include="Convert\BytesEncoder.cs" />
-    <Compile Include="Convert\IDataContractSerializer.cs" />
     <Compile Include="Convert\IPackageEncoder.cs" />
     <Compile Include="Convert\Serialization.cs" />
     <Compile Include="DefaultSettings.cs" />
@@ -137,9 +136,10 @@
     <Compile Include="IEClient.cs" />
     <Compile Include="ISingleClient.cs" />
     <Compile Include="Pack\Buffer.cs" />
-    <Compile Include="Pack\BufferSerializer.cs" />
+    <Compile Include="Pack\BufferCreator.cs" />
     <Compile Include="Pack\BufferTag.cs" />
     <Compile Include="Pack\Package.cs" />
+    <Compile Include="Pack\PackageCreator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Queue_Safe.cs" />
     <EmbeddedResource Include="Properties\ESocketModule.rd.xml" />

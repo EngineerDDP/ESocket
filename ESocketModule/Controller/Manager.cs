@@ -19,6 +19,7 @@ namespace ESocket.Controller
 	/// </summary>
 	class Manager : IManager
 	{
+		private object locker = new object();
 		/// <summary>
 		/// 用于操作的收发器
 		/// </summary>
@@ -42,11 +43,15 @@ namespace ESocket.Controller
 		/// <summary>
 		/// 存储缓存的发送队列
 		/// </summary>
-		private Pack.Buffer[] SendBuffer;
+		private List<KeyValuePair<UInt64, Pack.Buffer>> SendBuffer;
+		/// <summary>
+		/// 发送序列号
+		/// </summary>
+		private UInt64 SendSequence;
 		/// <summary>
 		/// 存储缓存的接收队列
 		/// </summary>
-		private Pack.Buffer[] RecvBuffer;
+		private List<KeyValuePair<UInt64, Pack.Buffer>> RecvBuffer;
 		/// <summary>
 		/// 当触发异常时生成
 		/// </summary>
@@ -83,54 +88,42 @@ namespace ESocket.Controller
 			Encoder = new Convert.PackageEncoder();
 			Json = new DataContractSerializer();
 			//初始化
-			SendBuffer = new Pack.Buffer[DefaultSettings.MaxmumSequence];
-			RecvBuffer = new Pack.Buffer[DefaultSettings.MaxmumSequence];
-			for (int i = 0; i < DefaultSettings.MaxmumSequence; ++i) 
-			{
-				SendBuffer[i] = null;
-				RecvBuffer[i] = null;
-			}
+			SendBuffer = new List<KeyValuePair<ulong, Pack.Buffer>>();
+			RecvBuffer = new List<KeyValuePair<ulong, Pack.Buffer>>();
 		}
 		/// <summary>
 		/// 添加Buffer
 		/// </summary>
-		/// <param name="buffer"></param>
-		/// <returns></returns>
-		public Boolean AddBuffer(Pack.Buffer buffer)
+		public void AddBuffer(Pack.Buffer buffer)
 		{
-			int id = 0;
-			if (FindAvailableID(ref id))
-			{
-				SendBuffer[id] = buffer;
-				Wait.Set();
-				return true;
-			}
-			else
-				return false;
+			SendBuffer.Add(new KeyValuePair<ulong, Pack.Buffer>(FindAvailableID(), buffer));
+			Wait.Set();
 		}
+		
 		/// <summary>
 		/// 寻找一个可用的ID
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		private Boolean FindAvailableID(ref int id)
+		private UInt64 FindAvailableID()
 		{
-			for (int i = 0; i < SendBuffer.Length; ++i)
-				if (SendBuffer[i] == null)
-				{
-					id = i;
-					return true;
-				}
-			return false;
+			lock(locker)
+			{
+				SendSequence = (SendSequence + 1) % (1 << (DefaultSettings.LengthofSeqTag * 8));
+			}
+			if (SendBuffer.Exists(q => q.Key == SendSequence))
+				return SendSequence;
+			else
+				return FindAvailableID();
 		}
 		/// <summary>
 		/// 获取数据当前长度
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public long GetLength(int id)
+		public long GetLength(uint id)
 		{
-			return RecvBuffer[id].Data.Length;
+			return RecvBuffer.Find(q => q.Key == id).Value.Data.Length;
 		}
 		/// <summary>
 		/// 设置收发器，返回成功与否的标志
@@ -254,7 +247,7 @@ namespace ESocket.Controller
 			else
 			{
 				var buffer = RecvBuffer[p.Sequence];
-				buffer.Data.Write(p.Data, 0, p.Size);
+				buffer.Data.Write(p.Data, 0, p.Data.Length);
 			}
 			if (RecvBuffer[p.Sequence] != null && RecvBuffer[p.Sequence].Data.Length == RecvBuffer[p.Sequence].DataLength)
 			{

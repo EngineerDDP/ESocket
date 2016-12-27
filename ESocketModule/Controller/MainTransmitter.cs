@@ -208,20 +208,11 @@ namespace ESocket.Controller
 				Wait.WaitOne();
 
 			Stream s = Client.OutputStream.AsStreamForWrite();
-			s.WriteByte(pack.Sequence);
+			pack.Serialize(s);
 
-			UploadCount += 1;
-			TotalUpload += 1;
-			//检查序列号并写入剩余数据
-			if (pack.Sequence != DefaultSettings.NonSequence)
-			{
-				s.Write(Convert.Serialization.GetBytes(pack.Size), 0, 2);
-				s.Write(pack.Data, 0, pack.Size);
+			UploadCount += pack.PackageLength;
+			TotalUpload += pack.PackageLength;
 
-				//设置计数器
-				UploadCount += pack.Size + 2u;
-				TotalUpload += pack.Size + 2u;
-			}
 			s.Flush();
 		}
 		/// <summary>
@@ -234,25 +225,12 @@ namespace ESocket.Controller
 
 			Package r = null;
 			Stream s = Client.InputStream.AsStreamForRead();
-			byte b = (byte)s.ReadByte();
+			Package p = new Package(s);
 
-			TotalDownload += 1;
-			DownloadCount += 1;
-			//检查序列号并读取剩余数据
-			if (b != DefaultSettings.NonSequence)
-			{
-				byte[] buffer = new byte[2];
-				s.Read(buffer, 0, 2);
-				UInt16 size = Convert.Serialization.GetUInt16(buffer);
-				buffer = new byte[size];
-				s.Read(buffer, 0, size);
+			TotalDownload += p.PackageLength;
+			DownloadCount += p.PackageLength;
 
-				//设置计数器
-				TotalDownload += size + 2u;
-				DownloadCount += size + 2u;
-				r = new Package(b, size, buffer);
-			}
-			return r;
+			return p;
 		}
 
 		public void Dispose()

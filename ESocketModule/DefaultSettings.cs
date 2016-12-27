@@ -84,6 +84,22 @@ namespace ESocket
 		/// 临时ID
 		/// </summary>
 		public const Int64 WaitForIdentified = -1;
+		/// <summary>
+		/// 数据包大小标记长度
+		/// </summary>
+		public const int LengthofSizeTag = 2;
+		/// <summary>
+		/// 数据包序号标记长度
+		/// </summary>
+		public const int LengthofSeqTag = 2;
+		/// <summary>
+		/// 数据打包协议
+		/// </summary>
+		public const DataContract Contract = DataContract.Default;
 		#endregion
+	}
+	enum DataContract
+	{
+		Json,Xml,TLV,Default
 	}
 }
