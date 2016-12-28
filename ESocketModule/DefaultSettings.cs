@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ESocket
 {
 	/// <summary>
-	/// 模块默认设定,使用模块功能时先初始化设置,否则将使用常量初始化这些设置
+	/// 模块默认设定,使用模块功能时先初始化设置,否则将使用预设量初始化这些设置
 	/// </summary>
 	class DefaultSettings
 	{

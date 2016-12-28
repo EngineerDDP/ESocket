@@ -11,7 +11,7 @@ namespace ESocket.Controller
 {
 	class DebugTransmitter : ITransmitter
 	{
-		private static Pack.Package pack;
+		private Queue_Safe<Pack.Package> packs = new Queue_Safe<Package>();
 
 		public uint DownloadSpeed
 		{
@@ -104,7 +104,7 @@ namespace ESocket.Controller
 		public void SendPackage(Package pack)
 		{
 			//System.Diagnostics.Debug.WriteLine("New Package Send , Sequence : {0} , Size : {1} , DataLength : {2} , Data : {3} .", pack.Sequence, pack.Size, pack.Data.Length, pack.Data);
-			DebugTransmitter.pack = pack;
+			packs.Enqueue(pack);
 		}
 
 		public async Task StartAutoRecvAsync()
@@ -113,11 +113,11 @@ namespace ESocket.Controller
 			{
 				while (true)
 				{
-					Task.Delay(10).Wait();
-					if(pack != null)
+					//Task.Delay(10).Wait();
+					if(packs.Count != 0)
 					{
+						Pack.Package pack = packs.Dequeue();
 						OnPackageReceived?.Invoke(this, new PackageReceivedEventArgs(DateTime.Now, pack, this.RemoteHostName, this.RemoteServiceName, this.LocalServiceName));
-						pack = null;
 					}
 				}
 			});

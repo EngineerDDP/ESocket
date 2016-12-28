@@ -49,6 +49,12 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ESocket%28WinForm%29\ESocket%28WinForm%29.csproj">
+      <Project>{93c549b0-56ef-4fb1-ab1b-49a00efe9956}</Project>
+      <Name>ESocket%28WinForm%29</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

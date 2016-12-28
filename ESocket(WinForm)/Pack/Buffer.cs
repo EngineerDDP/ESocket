@@ -100,45 +100,42 @@ namespace ESocket.Pack
 			Tag = tag;
 			Priority = priority;
 		}
-		///// <summary>
-		///// 读取一个数据包，没有数据包可读时返回null
-		///// </summary>
-		///// <param name="seq">数据序列号</param>
-		///// <returns></returns>
-		//public Package ReadPackage(int seq)
-		//{
-		//	if (Status == SendStatus.Sendingtag)
-		//	{
-		//		var s = new MemoryStream();
-		//		var json = new DataContractJsonSerializer(typeof(BufferTag));
-		//		json.WriteObject(s, Tag);
-		//		return new Package((byte)seq, (ushort)s.Length, s.ToArray());
-		//	}
-		//	else if (Status == SendStatus.SendingData)
-		//	{
-		//		byte[] buffer = new byte[Math.Min(Data.Length - Data.Position, DefaultSettings.Value.PackageSize)];
-		//		Data.Read(buffer, 0, buffer.Length);
-		//		return new Package((byte)seq, (ushort)buffer.Length, buffer);
-		//	}
-		//	else
-		//		return null;
-		//}
-		///// <summary>
-		///// 写入指定的数据包，返回写入完成的标志
-		///// </summary>
-		///// <param name="pack"></param>
-		///// <returns></returns>
-		//public Boolean WritePackage(Package pack)
-		//{
-		//	Data.Write(pack.Data, 0, pack.Size);
-		//	if (Data.Length >= Tag.DataLength)
-		//		return true;
-		//	else
-		//		return false;
-		//}
+
+		#region IDisposable Support
+		private bool disposedValue = false; // 要检测冗余调用
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// TODO: 释放托管状态(托管对象)。
+					data.Dispose();
+					data = null;
+				}
+
+				// TODO: 释放未托管的资源(未托管的对象)并在以下内容中替代终结器。
+				// TODO: 将大型字段设置为 null。
+
+				disposedValue = true;
+			}
+		}
+
+		// TODO: 仅当以上 Dispose(bool disposing) 拥有用于释放未托管资源的代码时才替代终结器。
+		// ~Buffer() {
+		//   // 请勿更改此代码。将清理代码放入以上 Dispose(bool disposing) 中。
+		//   Dispose(false);
+		// }
+
+		// 添加此代码以正确实现可处置模式。
 		public void Dispose()
 		{
-			((IDisposable)Data).Dispose();
+			// 请勿更改此代码。将清理代码放入以上 Dispose(bool disposing) 中。
+			Dispose(true);
+			// TODO: 如果在以上内容中替代了终结器，则取消注释以下行。
+			// GC.SuppressFinalize(this);
 		}
+		#endregion
 	}
 }

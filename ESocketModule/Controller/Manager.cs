@@ -107,7 +107,7 @@ namespace ESocket.Controller
 			{
 				SendSequence = (SendSequence + 1) % (1 << (DefaultSettings.LengthofSeqTag * 8));
 			}
-			if (SendBuffer.Exists(q => q.Key == SendSequence))
+			if (!SendBuffer.Exists(q => q.Key == SendSequence))
 				return SendSequence;
 			else
 				return FindAvailableID();
@@ -196,25 +196,20 @@ namespace ESocket.Controller
 		/// <param name="args"></param>
 		private void Transmitter_OnPackageReceived(object sender, Args.PackageReceivedEventArgs args)
 		{
-			bool complete = false;
-			var val = RecvBuffer.FirstOrDefault(q => q.Key == args.Value.Sequence).Value;
-			try
+			int i = RecvBuffer.FindIndex(q => q.Key == args.Value.Sequence);
+			Pack.Buffer b = null;
+			if (i != -1)
+				b = RecvBuffer[i].Value;
+			if (Serializer.WritePackage(args.Value, ref b))
 			{
-				complete = Serializer.WritePackage(args.Value, ref val);
+				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(b.CheckPoint, b, args.RemoteHostName, args.RemoteServiceName, args.LocalServiceName));
+				if(i != -1)
+					RecvBuffer.RemoveAt(i);
 			}
-			catch (Exception e)
+			else if(i == -1)
 			{
-				OnExcepetionOccurred?.Invoke(this, new Args.SocketExceptionEventArgs(this.GetType(), e, true));
-			}
-			if (val == null)
-			{
-				RecvBuffer.Add(new KeyValuePair<ulong, Pack.Buffer>(args.Value.Sequence, val));
-				OnStartReceiving?.Invoke(this, new Args.MessageStartReceivingEventArgs(val.Tag.Name, val.Tag.UserString, val.Tag.DataLength, args.Value.Sequence));
-			}
-			if(complete)
-			{
-				OnBufferReceived?.Invoke(this, new Args.BufferReceivedEventArgs(val.CheckPoint, val, args.RemoteHostName, args.RemoteServiceName, args.LocalServiceName));
-				RecvBuffer.RemoveAt(RecvBuffer.FindIndex(q => q.Key == args.Value.Sequence));
+				RecvBuffer.Add(new KeyValuePair<ulong, Pack.Buffer>(args.Value.Sequence, b));
+				OnStartReceiving?.Invoke(this, new Args.MessageStartReceivingEventArgs(b.Tag.Name, b.Tag.UserString, b.Tag.DataLength, args.Value.Sequence));
 			}
 		}
 		/// <summary>

@@ -5,7 +5,7 @@ using ESocket.Pack;
 
 namespace ESocket.Controller
 {
-	interface IManager
+	interface IManager : IDisposable
 	{
 		/// <summary>
 		/// 当收完消息后发生
@@ -28,13 +28,13 @@ namespace ESocket.Controller
 		/// </summary>
 		/// <param name="buffer"></param>
 		/// <returns></returns>
-		bool AddBuffer(Pack.Buffer buffer);
+		void AddBuffer(Pack.Buffer buffer);
 		/// <summary>
 		/// 获取接收缓冲区中指定ID数据的接收量
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		long GetLength(int id);
+		long GetLength(ulong id);
 		/// <summary>
 		/// 开始接受数据
 		/// </summary>

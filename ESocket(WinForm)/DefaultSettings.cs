@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ESocket
 {
 	/// <summary>
-	/// 模块默认设定,使用模块功能时先初始化设置,否则将使用常量初始化这些设置
+	/// 模块默认设定,使用模块功能时先初始化设置,否则将使用预设量初始化这些设置
 	/// </summary>
 	class DefaultSettings
 	{
@@ -84,6 +84,22 @@ namespace ESocket
 		/// 临时ID
 		/// </summary>
 		public const Int64 WaitForIdentified = -1;
+		/// <summary>
+		/// 数据包大小标记长度
+		/// </summary>
+		public const int LengthofSizeTag = 2;
+		/// <summary>
+		/// 数据包序号标记长度
+		/// </summary>
+		public const int LengthofSeqTag = 2;
+		/// <summary>
+		/// 数据打包协议
+		/// </summary>
+		public const DataContract Contract = DataContract.Default;
 		#endregion
+	}
+	enum DataContract
+	{
+		Json,Xml,TLV,Default
 	}
 }
