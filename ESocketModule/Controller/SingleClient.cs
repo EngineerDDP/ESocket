@@ -22,7 +22,7 @@ namespace ESocket.Controller
 	/// <summary>
 	/// 子链接，为访问Transmitter提供统一的接口
 	/// </summary>
-	class SingleClient : ISingleClient
+	class SingleClient : ISingleClient, IDisposable
 	{
 		/// <summary>
 		/// 标识该链接是否为服务器端
@@ -219,24 +219,24 @@ namespace ESocket.Controller
 			}
 		}
 
-		public bool Send(String type, String msg, int priority, Stream s, int port = 0)
+		public void Send(String type, String msg, int priority, Stream s, int port = 0)
 		{
-			return ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, msg, priority, s));
+			ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, msg, priority, s));
 		}
-		public bool Send(String type, String msg)
+		public void Send(String type, String msg)
 		{
-			return ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, msg));
+			ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, msg));
 		}
-		public bool Send(String type, object o)
+		public void Send(String type, object o)
 		{
-			return ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, o));
+			ConnectionManager.AddBuffer(BufferCreator.CreateBuffer(type, o));
 		}
 		/// <summary>
 		/// 获取指定ID的接受情况
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public long MessageRecvStatus(int id)
+		public long MessageRecvStatus(ulong id)
 		{
 			return ConnectionManager.GetLength(id);
 		}
@@ -335,6 +335,44 @@ namespace ESocket.Controller
 				c.UploadSpeedLimit = UploadSpeed;
 				c.DownloadSpeedLimit = DownLoadSpeed;
 			}
+		}
+
+		#endregion
+
+		#region IDisposable Support
+		private bool disposedValue = false; // 要检测冗余调用
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// TODO: 释放托管状态(托管对象)。
+					Transmitter.Dispose();
+					ConnectionManager.Dispose();
+				}
+
+				// TODO: 释放未托管的资源(未托管的对象)并在以下内容中替代终结器。
+				// TODO: 将大型字段设置为 null。
+
+				disposedValue = true;
+			}
+		}
+
+		// TODO: 仅当以上 Dispose(bool disposing) 拥有用于释放未托管资源的代码时才替代终结器。
+		// ~SingleClient() {
+		//   // 请勿更改此代码。将清理代码放入以上 Dispose(bool disposing) 中。
+		//   Dispose(false);
+		// }
+
+		// 添加此代码以正确实现可处置模式。
+		public void Dispose()
+		{
+			// 请勿更改此代码。将清理代码放入以上 Dispose(bool disposing) 中。
+			Dispose(true);
+			// TODO: 如果在以上内容中替代了终结器，则取消注释以下行。
+			// GC.SuppressFinalize(this);
 		}
 		#endregion
 	}

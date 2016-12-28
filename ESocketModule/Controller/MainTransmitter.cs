@@ -222,8 +222,7 @@ namespace ESocket.Controller
 		{
 			//重设计时器
 			IdleTime.Restart();
-
-			Package r = null;
+			
 			Stream s = Client.InputStream.AsStreamForRead();
 			Package p = new Package(s);
 

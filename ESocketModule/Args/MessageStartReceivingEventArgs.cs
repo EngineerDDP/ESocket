@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ESocket.Args
 {
-	public class MessageStartReceivingEventArgs
+	public class MessageStartReceivingEventArgs : EventArgs
 	{
 		public MessageStartReceivingEventArgs(string type, string msg, long length, ulong iD)
 		{

@@ -117,7 +117,7 @@ namespace ESocket.Controller
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public long GetLength(uint id)
+		public long GetLength(ulong id)
 		{
 			return RecvBuffer.Find(q => q.Key == id).Value.Data.Length;
 		}
@@ -252,6 +252,11 @@ namespace ESocket.Controller
 			}
 			else
 				return false;
+		}
+
+		public void Dispose()
+		{
+			Wait.Dispose();
 		}
 	}
 }

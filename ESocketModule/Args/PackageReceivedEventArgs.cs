@@ -8,7 +8,7 @@ using Windows.Networking;
 
 namespace ESocket.Args
 {
-	class PackageReceivedEventArgs
+	class PackageReceivedEventArgs : EventArgs
 	{
 		public PackageReceivedEventArgs(DateTime recvTime, Package value, HostName remoteHostName, string remoteServiceName, string localServiceName)
 		{

@@ -32,10 +32,10 @@ namespace ESocket
 
 		void Close();
 		Task Init();
-		long MessageRecvStatus(int id);
-		bool Send(string type, string msg);
-		bool Send(string type, object o);
-		bool Send(string type, string msg, int priority, Stream s, int port = 0);
+		long MessageRecvStatus(ulong id);
+		void Send(string type, string msg);
+		void Send(string type, object o);
+		void Send(string type, string msg, int priority, Stream s, int port = 0);
 		void SetInfo();
 		void SetSpeedLimit(uint upload, uint download);
 	}

@@ -5,7 +5,7 @@ using ESocket.Pack;
 
 namespace ESocket.Controller
 {
-	interface IManager
+	interface IManager : IDisposable
 	{
 		/// <summary>
 		/// 当收完消息后发生
@@ -34,7 +34,7 @@ namespace ESocket.Controller
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		long GetLength(uint id);
+		long GetLength(ulong id);
 		/// <summary>
 		/// 开始接受数据
 		/// </summary>

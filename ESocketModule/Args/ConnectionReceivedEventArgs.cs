@@ -7,7 +7,7 @@ using ESocket.Controller;
 
 namespace ESocket.Args
 {
-	public class ConnectionReceivedEventArgs
+	public class ConnectionReceivedEventArgs : EventArgs
 	{
 		public ConnectionReceivedEventArgs(ISingleClient client)
 		{
